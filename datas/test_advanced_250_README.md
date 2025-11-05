@@ -163,6 +163,7 @@
     "filename": "2023-03-25-601319.SH-中国人保-601319中国人保2022年年度报告.pdf",
     "page": 127,
     "question": "中国人保2022年度的营业收入总额是多少亿元？",
+    "answer": "",
     "type": "事实提取"
   },
   ...
@@ -173,6 +174,7 @@
 - `filename`: 年报PDF文件名（完整文件名）
 - `page`: 建议检索的页码（基于关键词启发式匹配）
 - `question`: 问题文本
+- `answer`: 答案字段（预留为空，供RAG系统填充）
 - `type`: 问题类型（事实提取/列举枚举/比较计算/判断验证/推理分析）
 
 ## 🔧 生成与验证脚本
@@ -226,5 +228,49 @@ python tools/analyze_question_types.py
 5. **注释依据**：为每题标注建议检索页码范围或章节
 
 ## 📝 版本历史
+- **v2.1** (2025-11-05): 新增空白 `answer` 字段，供RAG系统填充答案
 - **v2.0** (2025-11-05): 重构为5类均衡分布，每类严格50题
 - **v1.0** (2025-11-05): 初始版本（已废弃，类型分布不均）
+
+## 🔄 使用流程建议
+
+### 第一步：使用RAG系统生成答案
+```python
+# 伪代码示例
+import json
+rag = SimpleRAG("all_pdf_page_chunks_merged.json")
+rag.setup()
+
+with open("datas/test_advanced_250.json", 'r', encoding='utf-8') as f:
+    test_data = json.load(f)
+
+for item in test_data:
+    result = rag.generate_answer(item['question'], top_k=5)
+    item['answer'] = result['answer']
+    item['source_page'] = result.get('page', '')
+    item['source_filename'] = result.get('filename', '')
+
+# 保存带答案的结果
+with open("outputs/test_advanced_250_with_answers.json", 'w', encoding='utf-8') as f:
+    json.dump(test_data, f, ensure_ascii=False, indent=2)
+```
+
+### 第二步：人工校验与幻觉标注
+对生成的答案进行质量评估：
+1. 抽样检查事实提取类答案的数值准确性
+2. 验证列举枚举类答案的完整性
+3. 核验比较计算类答案的计算正确性
+4. 检查判断验证类答案的逻辑一致性
+5. 评估推理分析类答案的归因合理性
+
+### 第三步：构建幻觉检测训练集
+基于标注结果，构造正负样本对：
+- **正样本**: 通过人工验证的高质量答案
+- **负样本**: 标注了幻觉类型的错误答案
+
+## 📌 注意事项
+
+1. **页码字段仅供参考**: `page` 字段是基于关键词启发式匹配的建议页码，实际答案可能在其他页面
+2. **答案字段为空**: 需要通过RAG系统或人工填充
+3. **类型字段用途**: 用于区分问题难度和评估不同能力维度
+4. **文件名完整性**: 包含完整路径信息，便于定位源文件
