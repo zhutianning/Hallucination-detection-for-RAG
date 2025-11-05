@@ -3,7 +3,7 @@
 ## 📋 Task Requirements
 1. ❌ Original test.json contains many duplicate questions
 2. ❌ Question design is too simple, not conducive to hallucination detection
-3. ✅ Need to redesign 250 questions for 25 annual reports
+3. ✅ Need to redesign 250 questions for 26 annual reports
 
 ## ✅ Task Completion Status
 
