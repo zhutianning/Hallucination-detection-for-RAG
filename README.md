@@ -1,136 +1,135 @@
-# 任务总结：高质量问题集生成
+# Task Summary: High-Quality Question Set Generation
 
-## 📋 任务需求
-1. ❌ 原 test.json 存在大量重复问题
-2. ❌ 问题设计过于简单，不利于幻觉检测
-3. ✅ 需要针对25份年报重新设计250条问题
+## 📋 Task Requirements
+1. ❌ Original test.json contains many duplicate questions
+2. ❌ Question design is too simple, not conducive to hallucination detection
+3. ✅ Need to redesign 250 questions for 25 annual reports
 
-## ✅ 任务完成情况
+## ✅ Task Completion Status
 
-### 生成的问题集：`datas/test_advanced_250.json`
+### Generated Question Set: `datas/test_advanced_250.json`
 
-#### 核心指标（100%达标）
-- **总问题数**: 250条
-- **唯一问题数**: 250条（**0重复**）
-- **覆盖年报**: 23份（2022-2024年度）
-- **字段完整性**: 100%（所有项包含5个字段）
+#### Core Metrics (100% Achievement)
+- **Total Questions**: 250
+- **Unique Questions**: 250 (**0 duplicates**)
+- **Report Coverage**: 26 reports (2022-2024)
+- **Field Completeness**: 100% (all items contain 5 fields)
 
-#### 类型分布（严格均衡）
-| 类型 | 数量 | 占比 | 状态 |
-|------|------|------|------|
-| 事实提取类 | 50题 | 20% | ✅ |
-| 列举枚举类 | 50题 | 20% | ✅ |
-| 比较计算类 | 50题 | 20% | ✅ |
-| 判断验证类 | 50题 | 20% | ✅ |
-| 推理分析类 | 50题 | 20% | ✅ |
+#### Type Distribution (Strictly Balanced)
+| Type | Count | Percentage | Status |
+|------|-------|------------|--------|
+| Fact Extraction | 50 | 20% | ✅ |
+| List Enumeration | 50 | 20% | ✅ |
+| Comparison & Calculation | 50 | 20% | ✅ |
+| Judgment & Verification | 50 | 20% | ✅ |
+| Reasoning & Analysis | 50 | 20% | ✅ |
 
-## 📊 问题质量提升对比
+## 📊 Question Quality Improvement Comparison
 
-| 维度 | 原test.json | 新test_advanced_250.json | 提升 |
-|------|-------------|--------------------------|------|
-| **问题重复性** | 大量重复 | 0重复 | ✅✅✅ |
-| **类型多样性** | 单一（多为推理类） | 5类均衡 | ✅✅✅ |
-| **复杂度层次** | 简单 | 中-高（分5个梯度） | ✅✅ |
-| **幻觉检测友好** | 中等 | 高（带类型标签） | ✅✅✅ |
-| **格式规范性** | 基础 | 完整（5字段） | ✅✅ |
-| **文档完整性** | 无 | 含README+验证报告 | ✅✅ |
+| Dimension | Original test.json | New test_advanced_250.json | Improvement |
+|-----------|-------------------|----------------------------|-------------|
+| **Question Duplication** | Many duplicates | 0 duplicates | ✅✅✅ |
+| **Type Diversity** | Single (mostly reasoning) | 5 types balanced | ✅✅✅ |
+| **Complexity Level** | Simple | Medium-High (5 gradients) | ✅✅ |
+| **Hallucination Detection Friendly** | Medium | High (with type tags) | ✅✅✅ |
+| **Format Standardization** | Basic | Complete (5 fields) | ✅✅ |
+| **Documentation Completeness** | None | With README + validation report | ✅✅ |
 
-## 🎯 各类型问题设计特点
+## 🎯 Design Characteristics of Each Question Type
 
-### 1. 事实提取类（50题）
-**用途**: 测试RAG精确定位与数值提取能力
+### 1. Fact Extraction (50 questions)
+**Purpose**: Test RAG's precise location and numerical extraction capabilities
 ```
-中国人保2022年度的营业收入总额是多少亿元？
-四方股份2023年度的基本每股收益（EPS）是多少元？
+What is the total operating revenue of PICC in 2022 in hundred million yuan?
+What is the basic earnings per share (EPS) of Sifang Co., Ltd. in 2023?
 ```
-**幻觉检测**: 易于检测数值编造、单位错误
+**Hallucination Detection**: Easy to detect numerical fabrication and unit errors
 
-### 2. 列举枚举类（50题）
-**用途**: 测试结构化信息提取与完整性
+### 2. List Enumeration (50 questions)
+**Purpose**: Test structured information extraction and completeness
 ```
-请列举中国人保2022年度前五大客户的名称及其销售收入占比。
-中国中免2023年度主要业务板块有哪些？各板块收入占比分别是多少？
+List the names and sales revenue percentages of PICC's top five customers in 2022.
+What are the main business segments of China Tourism Group Duty Free in 2023? What are the revenue percentages of each segment?
 ```
-**幻觉检测**: 易于检测信息遗漏、名单编造
+**Hallucination Detection**: Easy to detect information omission and list fabrication
 
-### 3. 比较计算类（50题）
-**用途**: 测试多期数据对比与计算能力
+### 3. Comparison & Calculation (50 questions)
+**Purpose**: Test multi-period data comparison and calculation capabilities
 ```
-计算中国神华2023年度营业收入同比增长率和增长金额。
-对比工商银行2024年度Q1至Q4各季度营业收入。
+Calculate the year-on-year growth rate and growth amount of China Shenhua's operating revenue in 2023.
+Compare the quarterly operating revenues from Q1 to Q4 of ICBC in 2024.
 ```
-**幻觉检测**: 易于检测计算错误、逻辑混乱
+**Hallucination Detection**: Easy to detect calculation errors and logical confusion
 
-### 4. 判断验证类（50题）
-**用途**: 测试条件分支逻辑与细节提取
+### 4. Judgment & Verification (50 questions)
+**Purpose**: Test conditional branch logic and detail extraction
 ```
-中信证券2023年度是否实施现金分红？如实施，分红金额和分红率各是多少？
-建设银行2024年度是否存在商誉减值？如存在，减值金额是多少？
+Did CITIC Securities implement cash dividends in 2023? If so, what are the dividend amount and dividend rate?
+Does CCB have goodwill impairment in 2024? If so, what is the impairment amount?
 ```
-**幻觉检测**: 易于检测虚构事件、细节编造
+**Hallucination Detection**: Easy to detect fictitious events and detail fabrication
 
-### 5. 推理分析类（50题）
-**用途**: 测试深度理解与归因推理能力
+### 5. Reasoning & Analysis (50 questions)
+**Purpose**: Test deep understanding and causal reasoning capabilities
 ```
-归因分析：中国人保2022年度营业收入增长的主要驱动因素（价格vs数量）。
-ROE拆解：工商银行2024年度ROE变化的杜邦三因素贡献度分析。
+Attribution analysis: What are the main driving factors (price vs. quantity) for PICC's operating revenue growth in 2022?
+ROE decomposition: Analyze the DuPont three-factor contribution to ICBC's ROE change in 2024.
 ```
-**幻觉检测**: 易于检测归因错误、逻辑跳跃
+**Hallucination Detection**: Easy to detect attribution errors and logical leaps
 
-## 📂 交付文件清单
+## 📂 Delivery File List
 
-### 核心文件
-- ✅ `datas/test_advanced_250.json` - 250条问题集（含空白answer字段）
-- ✅ `datas/test_advanced_250_README.md` - 详细使用说明
-- ✅ `datas/test_advanced_250_VALIDATION.txt` - 验证报告
+### Core Files
+- ✅ `datas/test_advanced_250.json` - 250 question set (with blank answer fields)
+- ✅ `datas/test_advanced_250_README.md` - Detailed usage instructions
+- ✅ `datas/test_advanced_250_VALIDATION.txt` - Validation report
 
-### 工具脚本
-- ✅ `tools/generate_advanced_questions.py` - 问题生成脚本（可复用）
-- ✅ `tools/fill_answers_example.py` - 答案填充示例脚本
+### Tool Scripts
+- ✅ `tools/generate_advanced_questions.py` - Question generation script (reusable)
+- ✅ `tools/fill_answers_example.py` - Answer filling example script
 
-## 🚀 后续使用建议
+## 🚀 Usage Recommendations
 
-### 第一步：生成答案
+### Step 1: Generate Answers
 ```bash
-# 使用RAG系统填充答案
+# Use RAG system to fill answers
 python tools/fill_answers_example.py
 ```
 
-### 第二步：人工校验
-抽样检查各类型问题的答案质量（建议每类抽查10题）
+### Step 2: Manual Verification
+Sample check the answer quality of each type of question (recommend checking 10 questions per type)
 
-### 第三步：幻觉检测器训练
-基于标注结果构建正负样本对：
-- 正样本：高质量答案
-- 负样本：标注6类幻觉（数值编造/信息遗漏/虚构事件/逻辑错误/时间混淆/计算错误）
+### Step 3: Hallucination Detector Training
+Build positive and negative sample pairs based on annotation results:
+- Positive samples: High-quality answers
+- Negative samples: Annotate 6 types of hallucinations (numerical fabrication/information omission/fictitious events/logical errors/time confusion/calculation errors)
 
-## 💡 创新点总结
+## 💡 Innovation Summary
 
-1. **严格类型均衡**: 首次实现5类问题严格50:50:50:50:50分布
-2. **类型标签化**: 每个问题带 `type` 字段，便于分类评估
-3. **答案字段预留**: 统一格式，便于RAG系统填充
-4. **零重复保证**: 全局去重机制，250题100%独特
-5. **文档完整**: 含README+验证报告+示例脚本
+1. **Strict Type Balance**: First achievement of strictly balanced 50:50:50:50:50 distribution for 5 question types
+2. **Type Labeling**: Each question has a `type` field for classification evaluation
+3. **Answer Field Reserved**: Unified format, convenient for RAG system filling
+4. **Zero Duplication Guarantee**: Global deduplication mechanism, 250 questions 100% unique
+5. **Complete Documentation**: Includes README + validation report + example scripts
 
-## 🎓 经验总结
+## 🎓 Lessons Learned
 
-### 问题生成的关键要素
-1. **类型多样性**: 覆盖事实/列举/计算/判断/推理5个维度
-2. **难度递进**: 从简单查询到复杂分析
-3. **可验证性**: 所有答案都可在文档中找到依据
-4. **去重机制**: 全局hash去重，避免简单复制
+### Key Elements of Question Generation
+1. **Type Diversity**: Cover 5 dimensions of fact/list/calculation/judgment/reasoning
+2. **Difficulty Progression**: From simple queries to complex analysis
+3. **Verifiability**: All answers can be found in the documents
+4. **Deduplication Mechanism**: Global hash deduplication to avoid simple copying
 
-### 幻觉检测的设计考量
-1. **事实类**: 易于自动验证（数值匹配）
-2. **列举类**: 易于检查完整性（集合比较）
-3. **计算类**: 易于数学验算
-4. **判断类**: 易于二元分类评估
-5. **推理类**: 需要人工评判归因合理性
+### Design Considerations for Hallucination Detection
+1. **Fact Type**: Easy for automatic verification (numerical matching)
+2. **List Type**: Easy to check completeness (set comparison)
+3. **Calculation Type**: Easy for mathematical verification
+4. **Judgment Type**: Easy for binary classification evaluation
+5. **Reasoning Type**: Requires human judgment of attribution rationality
 
 ---
 
-**生成时间**: 2025-11-05  
-**版本**: v2.1  
-**生成工具**: tools/generate_advanced_questions.py  
-**验证状态**: ✅ 全部通过
-
+**Generation Date**: 2025-11-05  
+**Version**: v2.1  
+**Generation Tool**: tools/generate_advanced_questions.py  
+**Validation Status**: ✅ All Passed
