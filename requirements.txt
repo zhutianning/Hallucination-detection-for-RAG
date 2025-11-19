@@ -1,0 +1,18 @@
+# Core dependencies
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+openai>=1.0.0
+numpy>=1.24.0
+loguru>=0.7.0
+PyMuPDF>=1.23.0
+
+# Embedding and ML models
+FlagEmbedding>=1.2.0
+transformers>=4.35.0
+sentencepiece>=0.1.99
+accelerate>=0.24.0
+torch>=2.0.0
+
+# 需要高硬件资源（可选）
+# mineru[all]>=2.1.9
+# xinference>=1.8.0
