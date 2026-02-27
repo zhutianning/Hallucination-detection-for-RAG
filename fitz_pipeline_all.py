@@ -61,8 +61,9 @@ def process_pdfs_to_chunks(datas_dir: Path, output_json_path: Path):
 
 def main():
     base_dir = Path(__file__).parent 
-    datas_dir = base_dir / 'datas'
-    chunk_json_path = base_dir / 'all_pdf_page_chunks.json'
+    #年报2文件夹路径
+    datas_dir = base_dir / 'datas' / '年报2'
+    chunk_json_path = base_dir / 'all_pdf_page_chunks_2.json'
     
     process_pdfs_to_chunks(datas_dir, chunk_json_path)
 

@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 """
 使用与 RAG 相同的 LLM，在「不检索、不提供上下文」的前提下，
-直接对 `datas/test_advanced_250.json` 逐题生成答案，作为 baseline。
+直接对 `datas/test_advanced_500.json` 逐题生成答案，作为 baseline。
 
 输出格式与 RAG 结果保持一致：[{question, answer, filename, page}]
 方便后续与 `outputs/rag_top1_pred_10.json` 或其它 RAG 结果做对比。
@@ -18,30 +18,30 @@ from tqdm import tqdm
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-TEST_PATH = BASE_DIR / "datas" / "test_advanced_250.json"
-OUT_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_250.json"
+TEST_PATH = BASE_DIR / "datas" / "test_advanced_500.json"
+OUT_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500.json"
 
-# 如果只想跑一小部分做 sanity check，可以把这里改成 10、20 等
-TEST_SAMPLE_NUM = None  # None 表示全部 250 题
+# if you want to run a subset of the questions, you can change the number here
+TEST_SAMPLE_NUM = None  # None means all 500 questions
 
 
 def get_llm_client() -> OpenAI:
-    """复用项目中同一套 LOCAL_* 配置，保证与 RAG 使用同一模型。"""
+    # use the same model as the rag model
     load_dotenv()
     api_key = os.getenv("LOCAL_API_KEY")
     base_url = os.getenv("LOCAL_BASE_URL")
     model = os.getenv("LOCAL_TEXT_MODEL")
     if not api_key or not base_url or not model:
-        raise ValueError("请在 .env 中配置 LOCAL_API_KEY / LOCAL_BASE_URL / LOCAL_TEXT_MODEL")
+        raise ValueError("please set the LOCAL_API_KEY / LOCAL_BASE_URL / LOCAL_TEXT_MODEL in the .env file")
     client = OpenAI(api_key=api_key, base_url=base_url)
-    client._baseline_model = model  # 仅作记录，方便调试
+    client._baseline_model = model  # only for debugging
     return client
 
 
 def call_llm_for_question(client: OpenAI, model: str, question: str) -> dict:
     """
-    使用同一 LLM，在“不提供检索内容”的情况下直接回答问题。
-    仅约束输出为 JSON：{answer, filename, page}
+    Use the same LLM to answer directly without retrieval context.
+    Constrain output to JSON only: {answer, filename, page}
     """
     system_msg = (
         "你是一名专业的金融分析助手。现在不提供任何具体年报原文或检索内容，"
@@ -77,22 +77,22 @@ def call_llm_for_question(client: OpenAI, model: str, question: str) -> dict:
                 max_tokens=512,
             )
             raw = completion.choices[0].message.content.strip()
-            break  # 成功就退出循环
+            break  # Exit loop on success
         except Exception as e:
             last_err = e
             wait = 2 * (attempt + 1)
-            print(f"[no-rag] 调用 LLM 失败，第 {attempt+1}/{max_retries} 次重试，等待 {wait}s，错误: {e}")
+            print(f"[no-rag] call llm failed, attempt {attempt+1}/{max_retries}, wait {wait}s, error: {e}")
             time.sleep(wait)
     else:
-        # 多次重试仍失败，返回一个占位答案，避免整个脚本崩掉
-        print(f"[no-rag] 多次重试仍失败，跳过该问题: {question[:40]}..., 最后错误: {last_err}")
+        # Return a fallback answer after repeated failures.
+        print(f"[no-rag] multiple retries failed, skip this question: {question[:40]}..., last error: {last_err}")
         return {
-            "answer": "【基线生成失败：模型接口多次报错，无法给出答案】",
+            "answer": "baseline generation failed, model interface multiple errors, cannot give an answer",
             "filename": "",
             "page": "",
         }
 
-    # 尝试直接解析 JSON；失败则降级为把原文塞到 answer 字段
+    # Try parsing JSON; if it fails, fallback to raw text.
     try:
         parsed = json.loads(raw)
         if isinstance(parsed, dict):
@@ -113,7 +113,7 @@ def call_llm_for_question(client: OpenAI, model: str, question: str) -> dict:
 
 def main():
     if not TEST_PATH.exists():
-        raise FileNotFoundError(f"找不到测试集文件: {TEST_PATH}")
+        raise FileNotFoundError(f"cannot find the test set file: {TEST_PATH}")
 
     with TEST_PATH.open("r", encoding="utf-8") as f:
         test_data = json.load(f)
@@ -125,23 +125,23 @@ def main():
     else:
         selected_indices = all_indices
 
-    print(f"加载测试集 {TEST_PATH.name}，共 {total} 题，本次生成 {len(selected_indices)} 题的 baseline（无 RAG）答案。")
-
+    print(f"loading test set {TEST_PATH.name}, total {total} questions, generate {len(selected_indices)} questions' baseline (no RAG) answer.")
     load_dotenv()
     api_key = os.getenv("LOCAL_API_KEY")
     base_url = os.getenv("LOCAL_BASE_URL")
     model = os.getenv("LOCAL_TEXT_MODEL")
+    print(f"Using API: {base_url}, Model: {model}")
     client = get_llm_client()
 
     results = []
-    for i, idx in enumerate(tqdm(selected_indices, desc="生成 baseline 答案")):
+    for i, idx in enumerate(tqdm(selected_indices, desc="Generating baseline answers")):
         item = test_data[idx]
         q = item["question"]
         res = call_llm_for_question(client, model, q)
         results.append({
             "question": q,
             "answer": res["answer"],
-            # baseline 不使用检索，因此 filename/page 可以保留 LLM 的猜测或为空
+            # Baseline does not use retrieval; filename/page can be guessed or empty.
             "filename": res["filename"],
             "page": res["page"],
         })
@@ -150,8 +150,8 @@ def main():
     with OUT_PATH.open("w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n已将 baseline（无 RAG）答案保存至: {OUT_PATH}")
-    print("你可以与 RAG 版本结果（如 outputs/rag_top1_pred_10.json 或其它文件）按 question 对齐比较。")
+    print(f"All baseline (no RAG) answers have been saved to: {OUT_PATH}")
+    print("You can compare the results with the RAG version (e.g. outputs/rag_top1_pred_10.json or other files) by question.")
 
 
 if __name__ == "__main__":

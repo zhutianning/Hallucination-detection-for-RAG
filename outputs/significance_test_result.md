@@ -1,62 +1,71 @@
-# Baseline vs RAG 显著性检验报告
+# Baseline vs RAG Significance Test Report
 
-## 总体结果
+## Overall Results
 
-- 总样本数: 208
-- Baseline Accuracy: 0.091
-- RAG Accuracy: 0.226
-- 准确率差异: 0.135 (13.5 个百分点)
+- Total samples: 500
+- Baseline Accuracy: 0.096
+- RAG Accuracy: 0.120
+- Accuracy difference: 0.024 (2.4 pp)
 
 ## McNemar's Test
 
-配对混淆矩阵:
+Paired contingency table:
 
-| | RAG正确 | RAG错误 |
+| | RAG Correct | RAG Wrong |
 |---|---|---|
-| Baseline正确 | 19 | 0 |
-| Baseline错误 | 28 | 161 |
+| Baseline Correct | 34 | 14 |
+| Baseline Wrong | 26 | 426 |
 
-- 卡方统计量: 26.0357
-- p 值: 0.000000
-- 优势比: ∞
+- Chi-square statistic: 3.0250
+- p-value: 0.081990
+- Odds ratio: 1.857
 
-**结果显著 (p < 0.05)：RAG 与 Baseline 的准确率差异具有统计学意义**
+**Not significant (p >= 0.05): Cannot reject H0 (no accuracy difference between systems).**
 
-## 按问题类型的显著性检验
+## Significance by Question Type
 
-### 事实提取
+### 事实提取  fact_extraction
 
-- 样本数: 50
-- Baseline Accuracy: 0.040
-- RAG Accuracy: 0.260
-- 差异: 0.220
-- McNemar p 值: 0.002569
-- **显著 (p < 0.05)**
+- Samples: 100
+- Baseline Accuracy: 0.020
+- RAG Accuracy: 0.070
+- Difference: 0.050
+- McNemar p-value: 0.182422
+- Not significant (p >= 0.05)
 
-### 判断验证
+### 列举枚举 enumeration
 
-- 样本数: 50
-- Baseline Accuracy: 0.340
-- RAG Accuracy: 0.560
-- 差异: 0.220
-- McNemar p 值: 0.002569
-- **显著 (p < 0.05)**
+- Samples: 100
+- Baseline Accuracy: 0.140
+- RAG Accuracy: 0.130
+- Difference: -0.010
+- McNemar p-value: 1.000000
+- Not significant (p >= 0.05)
 
-### 推理分析
+### 判断验证 judgment_verification
 
-- 样本数: 50
-- Baseline Accuracy: 0.000
+- Samples: 100
+- Baseline Accuracy: 0.260
+- RAG Accuracy: 0.330
+- Difference: 0.070
+- McNemar p-value: 0.023342
+- **Significant (p < 0.05)**
+
+### 推理分析 reasoning_analysis
+
+- Samples: 100
+- Baseline Accuracy: 0.060
 - RAG Accuracy: 0.040
-- 差异: 0.040
-- McNemar p 值: 0.479500
-- 不显著 (p >= 0.05)
+- Difference: -0.020
+- McNemar p-value: 0.617075
+- Not significant (p >= 0.05)
 
-### 比较计算
+### 比较计算 comparative_calculation
 
-- 样本数: 50
+- Samples: 100
 - Baseline Accuracy: 0.000
-- RAG Accuracy: 0.080
-- 差异: 0.080
-- McNemar p 值: 0.133614
-- 不显著 (p >= 0.05)
+- RAG Accuracy: 0.030
+- Difference: 0.030
+- McNemar p-value: 0.248213
+- Not significant (p >= 0.05)
 

@@ -77,11 +77,11 @@ def has_numeric_conflict(gold_answer: str, pred_answer: str, tol: float = 0.01) 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 路径约定：如有需要可自行修改
-GOLD_PATH = BASE_DIR / "datas" / "gold_standard.json"
-BASELINE_PATH = BASE_DIR / "no_rag_top1_pred_test_advanced_250.json"
-RAG_PATH = BASE_DIR / "rag_top1_pred.json"
-CHUNK_JSON_PATH = BASE_DIR / "all_pdf_page_chunks_merged.json"
+# if you need to modify the paths, you can do so
+GOLD_PATH = BASE_DIR / "datas" / "gold_standard_500.json" # gold standard file
+BASELINE_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500.json" # baseline file
+RAG_PATH = BASE_DIR / "rag_top1_pred.json" # rag output file
+CHUNK_JSON_PATH = BASE_DIR / "all_pdf_page_chunks_merged_2.json" # chunk json file
 
 
 def classify_error_type(rule_res: Dict, is_correct: bool, num_conflict: bool) -> str:
@@ -317,11 +317,11 @@ def print_report(res: Dict):
     print("\n" + "=" * 70)
     print(f"系统: {name}")
     print("=" * 70)
-    print(f"- 总样本数: {res['total']}")
-    print(f"- 答案正确数: {res['correct']}")
-    print(f"- Accuracy（答案正确率）: {res['accuracy']:.3f}")
+    print(f"- Total number of samples: {res['total']}")
+    print(f"- Number of correct answers: {res['correct']}")
+    print(f"- Accuracy (answer correctness rate): {res['accuracy']:.3f}")
 
-    print("\n按问题类型的答案正确率：")
+    print("\nAnswer correctness rate by question type:")
     for qtype, stats in res["type_stats"].items():
         tot = stats["total"]
         corr = stats["correct"]
@@ -329,7 +329,7 @@ def print_report(res: Dict):
         print(f"  - {qtype}: {corr}/{tot} (accuracy={acc:.3f})")
 
     det = res["hallu_detection"]
-    print("\n幻觉相关指标（正类=真实幻觉/矛盾，非将全部错误视为幻觉）:")
+    print("\n Hallucination related metrics (positive class=true hallucination/contradiction, not all errors are considered hallucinations):")
     print(f"- Hallucination Rate: {det['hallucination_rate']:.3f}")
     print(f"- Precision: {det['precision']:.3f}")
     print(f"- Recall: {det['recall']:.3f}")
@@ -338,7 +338,7 @@ def print_report(res: Dict):
 
 def main():
     print("=" * 70)
-    print("Baseline vs RAG 对比实验（答案质量 + 幻觉检测）")
+    print("Baseline vs RAG comparison experiment (answer quality + hallucination detection)")
     print("=" * 70)
 
     gold_data = load_json_list(GOLD_PATH)
@@ -349,18 +349,18 @@ def main():
     baseline_dict = index_by_question(baseline_data)
     rag_dict = index_by_question(rag_data)
 
-    print(f"- 加载 Gold 标准: {len(gold_dict)} 条")
-    print(f"- 加载 Baseline 答案: {len(baseline_dict)} 条")
-    print(f"- 加载 RAG 答案: {len(rag_dict)} 条")
+    print(f"- Loading Gold standard: {len(gold_dict)} questions")
+    print(f"- Loading Baseline answers: {len(baseline_dict)} questions")
+    print(f"- Loading RAG answers: {len(rag_dict)} questions")
 
     retriever = EvidenceRetriever(str(CHUNK_JSON_PATH))
     rule_detector = RuleBasedDetector()
 
     baseline_res = eval_system_against_gold(
-        "Baseline（无RAG，仅LLM）", gold_dict, baseline_dict, retriever, rule_detector
+        "Baseline (no RAG, only LLM)", gold_dict, baseline_dict, retriever, rule_detector
     )
     rag_res = eval_system_against_gold(
-        "RAG（检索增强）", gold_dict, rag_dict, retriever, rule_detector
+        "RAG (retrieval-augmented)", gold_dict, rag_dict, retriever, rule_detector
     )
 
     print_report(baseline_res)

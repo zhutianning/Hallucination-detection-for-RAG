@@ -6,9 +6,10 @@ from typing import Dict, List, Tuple
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-MERGED = (BASE_DIR / "all_pdf_page_chunks_merged.json").resolve()
-PDF_DIR = (BASE_DIR / "datas/年报").resolve()
-OUT = (BASE_DIR / "datas/test_advanced_250.json").resolve()
+#年报2文件夹路径
+MERGED = (BASE_DIR / "all_pdf_page_chunks_merged_2.json").resolve()
+PDF_DIR = (BASE_DIR / "datas/年报2").resolve()
+OUT = (BASE_DIR / "datas/test_advanced_450_2.json").resolve()
 
 
 def list_target_reports(pdf_dir: Path) -> List[str]:
@@ -233,8 +234,8 @@ def main():
     if n_reports == 0:
         raise RuntimeError("未找到可用的年度报告PDF")
 
-    TOTAL = 250
-    TARGET_PER_TYPE = 50  # 每种类型严格50题
+    TOTAL = len(pdfs) * 10
+    TARGET_PER_TYPE = 90  # 每种类型严格90题
     
     results: List[Dict] = []
     seen_questions = set()
@@ -275,6 +276,7 @@ def main():
                     "filename": fn,
                     "page": int(sel_pages[0]),
                     "question": q,
+                    "answer": "",  # 新增：空白答案字段
                     "type": qtype,
                 })
                 seen_questions.add(q)
@@ -306,6 +308,7 @@ def main():
                         "filename": fn,
                         "page": int(pg),
                         "question": q,
+                        "answer": "",  # 新增：空白答案字段
                         "type": qtype,
                     })
                     seen_questions.add(q)
@@ -314,7 +317,7 @@ def main():
                     if need <= 0:
                         break
 
-    # 截断至250（理论上应该正好250）
+    # 截断至450（理论上应该正好450）
     results = results[:TOTAL]
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,10 @@
 """
-显著性检验脚本：Baseline vs RAG
+Significance testing script: Baseline vs RAG
 
-使用 McNemar's Test 进行配对样本的显著性检验
-适用于：同一批问题，两个系统分别回答（配对数据）
+Uses McNemar's Test for paired-sample significance testing.
+Applicable when two systems answer the same set of questions (paired data).
 
-依赖：
+Dependencies:
 - datas/gold_standard.json
 - no_rag_top1_pred_test_advanced_250.json
 - rag_top1_pred.json
@@ -17,11 +17,11 @@ import numpy as np
 from scipy import stats
 from collections import defaultdict
 
-# 导入 compare_rag_vs_baseline.py 中的函数
+# Import helper functions from compare_rag_vs_baseline.py
 import sys
 from pathlib import Path
 
-# 确保可以导入同目录下的模块
+# Ensure imports work from the same directory
 sys.path.insert(0, str(Path(__file__).parent))
 
 from compare_rag_vs_baseline import (
@@ -41,12 +41,12 @@ def collect_paired_results(
     rag_dict: Dict[str, Dict],
 ) -> Tuple[List[bool], List[bool], Dict[str, List[Tuple[bool, bool]]]]:
     """
-    收集配对结果：对每个问题，记录 Baseline 和 RAG 是否正确
-    
-    返回：
-    - baseline_correct: List[bool] - Baseline 是否正确
-    - rag_correct: List[bool] - RAG 是否正确
-    - type_pairs: Dict[str, List[Tuple[bool, bool]]] - 按问题类型分组的配对结果
+    Collect paired outcomes for each question: whether Baseline and RAG are correct.
+
+    Returns:
+    - baseline_correct: List[bool] - Baseline correctness flags
+    - rag_correct: List[bool] - RAG correctness flags
+    - type_pairs: Dict[str, List[Tuple[bool, bool]]] - Paired outcomes grouped by question type
     """
     baseline_correct = []
     rag_correct = []
@@ -54,7 +54,7 @@ def collect_paired_results(
     
     for q, gold_item in gold_dict.items():
         gold_ans = gold_item.get("answer", "")
-        qtype = gold_item.get("type", "未知")
+        qtype = gold_item.get("type", "unknown")
         
         baseline_item = baseline_dict.get(q)
         rag_item = rag_dict.get(q)
@@ -77,18 +77,18 @@ def collect_paired_results(
 
 def build_mcnemar_table(baseline_correct: List[bool], rag_correct: List[bool]) -> np.ndarray:
     """
-    构建 McNemar 检验的配对混淆矩阵
-    
-    矩阵结构：
-                RAG 正确  RAG 错误
-    Baseline 正确   a        b
-    Baseline 错误   c        d
-    
-    其中：
-    - a: 两个都正确
-    - b: Baseline 正确，RAG 错误
-    - c: Baseline 错误，RAG 正确
-    - d: 两个都错误
+    Build the paired 2x2 contingency table for McNemar's test.
+
+    Table layout:
+                    RAG correct  RAG wrong
+    Baseline correct      a           b
+    Baseline wrong        c           d
+
+    Where:
+    - a: both correct
+    - b: Baseline correct, RAG wrong
+    - c: Baseline wrong, RAG correct
+    - d: both wrong
     """
     a = b = c = d = 0
     
@@ -107,31 +107,31 @@ def build_mcnemar_table(baseline_correct: List[bool], rag_correct: List[bool]) -
 
 def mcnemar_test(table: np.ndarray, correction: bool = True) -> Dict:
     """
-    执行 McNemar's Test
-    
-    参数：
-    - table: 2x2 配对混淆矩阵
-    - correction: 是否使用连续性校正（推荐用于小样本）
-    
-    返回：
-    - statistic: 卡方统计量
-    - pvalue: p 值
-    - odds_ratio: 优势比 (c/b)，如果 b+c > 0
+    Run McNemar's Test.
+
+    Args:
+    - table: 2x2 paired contingency table
+    - correction: whether to apply continuity correction (recommended for small samples)
+
+    Returns:
+    - statistic: chi-square statistic
+    - pvalue: p-value
+    - odds_ratio: odds ratio (c/b), when b+c > 0
     """
     a, b = table[0, 0], table[0, 1]
     c, d = table[1, 0], table[1, 1]
     
-    # McNemar's Test
+    # McNemar's test
     if correction:
-        # 使用连续性校正
+        # Apply continuity correction
         statistic = (abs(b - c) - 1) ** 2 / (b + c) if (b + c) > 0 else 0
     else:
         statistic = (b - c) ** 2 / (b + c) if (b + c) > 0 else 0
     
-    # p 值（卡方分布，自由度=1）
+    # p-value (chi-square distribution, df=1)
     pvalue = 1 - stats.chi2.cdf(statistic, df=1) if (b + c) > 0 else 1.0
     
-    # 优势比（odds ratio）
+    # Odds ratio
     odds_ratio = c / b if b > 0 else float('inf') if c > 0 else 1.0
     
     return {
@@ -139,27 +139,27 @@ def mcnemar_test(table: np.ndarray, correction: bool = True) -> Dict:
         "pvalue": pvalue,
         "odds_ratio": odds_ratio,
         "table": table,
-        "discordant_pairs": b + c,  # 不一致的对数
+        "discordant_pairs": b + c,  # Number of discordant pairs
     }
 
 
 def proportion_test(baseline_correct: List[bool], rag_correct: List[bool]) -> Dict:
     """
-    比例差异检验（使用正态近似）
-    
-    检验 H0: p_baseline = p_rag vs H1: p_baseline != p_rag
+    Test difference in proportions (normal approximation).
+
+    Test H0: p_baseline = p_rag vs H1: p_baseline != p_rag
     """
     n = len(baseline_correct)
     p_baseline = sum(baseline_correct) / n
     p_rag = sum(rag_correct) / n
     
-    # 计算标准误（配对样本）
+    # Standard error for paired samples
     diff = [r - b for r, b in zip(rag_correct, baseline_correct)]
     mean_diff = np.mean(diff)
     std_diff = np.std(diff, ddof=1)
     se_diff = std_diff / np.sqrt(n)
     
-    # t 检验
+    # Paired t-test on per-item correctness differences
     if se_diff > 0:
         t_stat = mean_diff / se_diff
         pvalue = 2 * (1 - stats.t.cdf(abs(t_stat), df=n-1))
@@ -182,74 +182,74 @@ def print_significance_report(
     proportion_result: Dict,
     type_results: Dict[str, Dict],
 ):
-    """打印显著性检验报告"""
+    """Print significance testing report."""
     print("=" * 70)
-    print("Baseline vs RAG 显著性检验报告")
+    print("Baseline vs RAG Significance Test Report")
     print("=" * 70)
     
-    # 总体结果
-    print("\n【总体结果】")
-    print(f"- 总样本数: {proportion_result['n']}")
+    # Overall results
+    print("\n[Overall Results]")
+    print(f"- Total samples: {proportion_result['n']}")
     print(f"- Baseline Accuracy: {proportion_result['p_baseline']:.3f}")
     print(f"- RAG Accuracy: {proportion_result['p_rag']:.3f}")
-    print(f"- 准确率差异: {proportion_result['difference']:.3f} ({proportion_result['difference']*100:.1f} 个百分点)")
+    print(f"- Accuracy difference: {proportion_result['difference']:.3f} ({proportion_result['difference']*100:.1f} pp)")
     
-    # McNemar's Test
-    print("\n【McNemar's Test（配对样本检验）】")
+    # McNemar's test
+    print("\n[McNemar's Test (Paired Samples)]")
     table = mcnemar_result['table']
-    print(f"配对混淆矩阵:")
-    print(f"                RAG正确  RAG错误")
-    print(f"Baseline正确    {table[0,0]:4d}    {table[0,1]:4d}")
-    print(f"Baseline错误    {table[1,0]:4d}    {table[1,1]:4d}")
-    print(f"\n不一致的对数: {mcnemar_result['discordant_pairs']}")
-    print(f"卡方统计量: {mcnemar_result['statistic']:.4f}")
-    print(f"p 值: {mcnemar_result['pvalue']:.6f}")
+    print("Paired contingency table:")
+    print("                   RAG Correct  RAG Wrong")
+    print(f"Baseline Correct   {table[0,0]:11d}  {table[0,1]:9d}")
+    print(f"Baseline Wrong     {table[1,0]:11d}  {table[1,1]:9d}")
+    print(f"\nDiscordant pairs: {mcnemar_result['discordant_pairs']}")
+    print(f"Chi-square statistic: {mcnemar_result['statistic']:.4f}")
+    print(f"p-value: {mcnemar_result['pvalue']:.6f}")
     
-    # 优势比
+    # Odds ratio
     if mcnemar_result['odds_ratio'] != float('inf'):
-        print(f"优势比 (RAG正确/Baseline正确): {mcnemar_result['odds_ratio']:.3f}")
+        print(f"Odds ratio (RAG-correct / Baseline-correct): {mcnemar_result['odds_ratio']:.3f}")
     else:
-        print(f"优势比: ∞ (RAG 在 Baseline 错误时总是正确)")
+        print("Odds ratio: ∞ (RAG is always correct when Baseline is wrong)")
     
-    # 显著性判断
+    # Significance interpretation
     alpha = 0.05
     if mcnemar_result['pvalue'] < alpha:
-        print(f"\n✓ 结果显著 (p < {alpha})：RAG 与 Baseline 的准确率差异具有统计学意义")
+        print(f"\n✓ Significant result (p < {alpha}): RAG and Baseline differ statistically in accuracy")
         if proportion_result['difference'] > 0:
-            print(f"  → RAG 显著优于 Baseline")
+            print("  -> RAG is significantly better than Baseline")
         else:
-            print(f"  → Baseline 显著优于 RAG")
+            print("  -> Baseline is significantly better than RAG")
     else:
-        print(f"\n✗ 结果不显著 (p >= {alpha})：无法拒绝 H0（两个系统准确率无差异）")
+        print(f"\n✗ Not significant (p >= {alpha}): cannot reject H0 (no accuracy difference)")
     
-    # 比例差异检验
-    print("\n【比例差异 t 检验】")
-    print(f"t 统计量: {proportion_result['t_statistic']:.4f}")
-    print(f"p 值: {proportion_result['pvalue']:.6f}")
+    # Proportion-difference test
+    print("\n[Proportion-Difference t-test]")
+    print(f"t-statistic: {proportion_result['t_statistic']:.4f}")
+    print(f"p-value: {proportion_result['pvalue']:.6f}")
     if proportion_result['pvalue'] < alpha:
-        print(f"✓ 结果显著 (p < {alpha})")
+        print(f"✓ Significant (p < {alpha})")
     else:
-        print(f"✗ 结果不显著 (p >= {alpha})")
+        print(f"✗ Not significant (p >= {alpha})")
     
-    # 按问题类型的结果
+    # Results by question type
     if type_results:
-        print("\n【按问题类型的显著性检验】")
+        print("\n[Significance by Question Type]")
         for qtype, result in sorted(type_results.items()):
             print(f"\n{qtype}:")
-            print(f"  - 样本数: {result['n']}")
+            print(f"  - Samples: {result['n']}")
             print(f"  - Baseline Accuracy: {result['p_baseline']:.3f}")
             print(f"  - RAG Accuracy: {result['p_rag']:.3f}")
-            print(f"  - 差异: {result['difference']:.3f}")
-            print(f"  - McNemar p 值: {result['mcnemar_p']:.6f}")
+            print(f"  - Difference: {result['difference']:.3f}")
+            print(f"  - McNemar p-value: {result['mcnemar_p']:.6f}")
             if result['mcnemar_p'] < alpha:
-                print(f"  ✓ 显著 (p < {alpha})")
+                print(f"  ✓ Significant (p < {alpha})")
             else:
-                print(f"  ✗ 不显著 (p >= {alpha})")
+                print(f"  ✗ Not significant (p >= {alpha})")
 
 
 def main():
     print("=" * 70)
-    print("加载数据...")
+    print("Loading data...")
     print("=" * 70)
     
     gold_data = load_json_list(GOLD_PATH)
@@ -260,27 +260,27 @@ def main():
     baseline_dict = index_by_question(baseline_data)
     rag_dict = index_by_question(rag_data)
     
-    print(f"- 加载 Gold 标准: {len(gold_dict)} 条")
-    print(f"- 加载 Baseline 答案: {len(baseline_dict)} 条")
-    print(f"- 加载 RAG 答案: {len(rag_dict)} 条")
+    print(f"- Gold standard loaded: {len(gold_dict)} items")
+    print(f"- Baseline answers loaded: {len(baseline_dict)} items")
+    print(f"- RAG answers loaded: {len(rag_dict)} items")
     
-    # 收集配对结果
-    print("\n收集配对结果...")
+    # Collect paired outcomes
+    print("\nCollecting paired outcomes...")
     baseline_correct, rag_correct, type_pairs = collect_paired_results(
         gold_dict, baseline_dict, rag_dict
     )
     
-    print(f"- 成功配对: {len(baseline_correct)} 条")
+    print(f"- Successfully paired: {len(baseline_correct)} items")
     
-    # 总体显著性检验
+    # Overall significance test
     table = build_mcnemar_table(baseline_correct, rag_correct)
     mcnemar_result = mcnemar_test(table, correction=True)
     proportion_result = proportion_test(baseline_correct, rag_correct)
     
-    # 按问题类型的显著性检验
+    # Significance tests by question type
     type_results = {}
     for qtype, pairs in type_pairs.items():
-        if len(pairs) < 10:  # 样本量太小，跳过
+        if len(pairs) < 10:  # Sample size too small; skip
             continue
         
         bl_corr = [p[0] for p in pairs]
@@ -299,56 +299,56 @@ def main():
             "table": type_table,
         }
     
-    # 打印报告
+    # Print report
     print_significance_report(mcnemar_result, proportion_result, type_results)
     
-    # 保存结果到文件
+    # Save results to file
     output_path = BASE_DIR / "outputs" / "significance_test_result.md"
     output_path.parent.mkdir(exist_ok=True)
     
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write("# Baseline vs RAG 显著性检验报告\n\n")
-        f.write("## 总体结果\n\n")
-        f.write(f"- 总样本数: {proportion_result['n']}\n")
+        f.write("# Baseline vs RAG Significance Test Report\n\n")
+        f.write("## Overall Results\n\n")
+        f.write(f"- Total samples: {proportion_result['n']}\n")
         f.write(f"- Baseline Accuracy: {proportion_result['p_baseline']:.3f}\n")
         f.write(f"- RAG Accuracy: {proportion_result['p_rag']:.3f}\n")
-        f.write(f"- 准确率差异: {proportion_result['difference']:.3f} ({proportion_result['difference']*100:.1f} 个百分点)\n\n")
+        f.write(f"- Accuracy difference: {proportion_result['difference']:.3f} ({proportion_result['difference']*100:.1f} pp)\n\n")
         
         f.write("## McNemar's Test\n\n")
-        f.write("配对混淆矩阵:\n\n")
-        f.write("| | RAG正确 | RAG错误 |\n")
+        f.write("Paired contingency table:\n\n")
+        f.write("| | RAG Correct | RAG Wrong |\n")
         f.write("|---|---|---|\n")
-        f.write(f"| Baseline正确 | {table[0,0]} | {table[0,1]} |\n")
-        f.write(f"| Baseline错误 | {table[1,0]} | {table[1,1]} |\n\n")
-        f.write(f"- 卡方统计量: {mcnemar_result['statistic']:.4f}\n")
-        f.write(f"- p 值: {mcnemar_result['pvalue']:.6f}\n")
+        f.write(f"| Baseline Correct | {table[0,0]} | {table[0,1]} |\n")
+        f.write(f"| Baseline Wrong | {table[1,0]} | {table[1,1]} |\n\n")
+        f.write(f"- Chi-square statistic: {mcnemar_result['statistic']:.4f}\n")
+        f.write(f"- p-value: {mcnemar_result['pvalue']:.6f}\n")
         if mcnemar_result['odds_ratio'] != float('inf'):
-            f.write(f"- 优势比: {mcnemar_result['odds_ratio']:.3f}\n")
+            f.write(f"- Odds ratio: {mcnemar_result['odds_ratio']:.3f}\n")
         else:
-            f.write(f"- 优势比: ∞\n")
+            f.write(f"- Odds ratio: ∞\n")
         
         alpha = 0.05
         if mcnemar_result['pvalue'] < alpha:
-            f.write(f"\n**结果显著 (p < {alpha})：RAG 与 Baseline 的准确率差异具有统计学意义**\n")
+            f.write(f"\n**Significant (p < {alpha}): The accuracy difference between RAG and Baseline is statistically meaningful.**\n")
         else:
-            f.write(f"\n**结果不显著 (p >= {alpha})：无法拒绝 H0（两个系统准确率无差异）**\n")
+            f.write(f"\n**Not significant (p >= {alpha}): Cannot reject H0 (no accuracy difference between systems).**\n")
         
         if type_results:
-            f.write("\n## 按问题类型的显著性检验\n\n")
+            f.write("\n## Significance by Question Type\n\n")
             for qtype, result in sorted(type_results.items()):
                 f.write(f"### {qtype}\n\n")
-                f.write(f"- 样本数: {result['n']}\n")
+                f.write(f"- Samples: {result['n']}\n")
                 f.write(f"- Baseline Accuracy: {result['p_baseline']:.3f}\n")
                 f.write(f"- RAG Accuracy: {result['p_rag']:.3f}\n")
-                f.write(f"- 差异: {result['difference']:.3f}\n")
-                f.write(f"- McNemar p 值: {result['mcnemar_p']:.6f}\n")
+                f.write(f"- Difference: {result['difference']:.3f}\n")
+                f.write(f"- McNemar p-value: {result['mcnemar_p']:.6f}\n")
                 if result['mcnemar_p'] < alpha:
-                    f.write(f"- **显著 (p < {alpha})**\n")
+                    f.write(f"- **Significant (p < {alpha})**\n")
                 else:
-                    f.write(f"- 不显著 (p >= {alpha})\n")
+                    f.write(f"- Not significant (p >= {alpha})\n")
                 f.write("\n")
     
-    print(f"\n结果已保存到: {output_path}")
+    print(f"\nResults saved to: {output_path}")
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ class PageChunkLoader: # 用于加载分页后的内容
 class EmbeddingModel: # 用于生成文本嵌入
     def __init__(self, batch_size: int = 64, use_local: bool = False, model_name: str = None):
         self.batch_size = batch_size
-        self.use_local = False
+        self.use_local = use_local
         
         if use_local:
             # 直接使用 Hugging Face 模型
@@ -36,23 +36,23 @@ class EmbeddingModel: # 用于生成文本嵌入
             self.model_name = model_name or os.getenv('LOCAL_EMBEDDING_MODEL', 'BAAI/bge-m3')
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             
-            print(f"正在加载嵌入模型: {self.model_name}")
+            print(f"Loading embedding model: {self.model_name}")
             self.model = FlagModel(
                 self.model_name,
                 query_instruction_for_retrieval="为这个句子生成表示以用于检索相关文章：",
                 use_fp16=(self.device == "cuda")  # GPU 使用 fp16 加速
             )
             # FlagModel 已经处于评估模式，不需要调用 eval()
-            print(f"嵌入模型加载完成，设备: {self.device}")
+            print(f"Embedding model loaded, device: {self.device}")
         else:
             # 保留原有的 API 调用方式（向后兼容）
-            print("使用硅基流动API")
+            print(f"Use API: {self.base_url}")
         
             self.api_key = os.getenv('LOCAL_API_KEY')
             self.base_url = os.getenv('LOCAL_BASE_URL')
             self.embedding_model = os.getenv('LOCAL_EMBEDDING_MODEL')
             if not self.api_key or not self.base_url:
-                raise ValueError('请在.env中配置LOCAL_API_KEY和LOCAL_BASE_URL')
+                raise ValueError('Please set the LOCAL_API_KEY and LOCAL_BASE_URL in the .env file')
             print(f"Use API mode:{self.embedding_model}")
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
@@ -112,17 +112,17 @@ class SimpleVectorStore:
 class SimpleRAG:
     def __init__(self, chunk_json_path: str, model_path: str = None, batch_size: int = 8):
         self.loader = PageChunkLoader(chunk_json_path)
-        self.embedding_model = EmbeddingModel(batch_size=batch_size)
+        self.embedding_model = EmbeddingModel(batch_size=batch_size, use_local=True)
         self.vector_store = SimpleVectorStore()
     def setup(self):
-        print("加载所有页chunk...")
+        print("Loading all page chunks...")
         chunks = self.loader.load_chunks()
-        print(f"共加载 {len(chunks)} 个chunk")
-        print("生成嵌入...")
+        print(f"Total Loading {len(chunks)} chunks")
+        print("Generating embeddings...")
         embeddings = self.embedding_model.embed_texts([c['content'] for c in chunks])
-        print("存储向量...")
+        print("Storing embeddings...")
         self.vector_store.add_chunks(chunks, embeddings)
-        print("RAG向量库构建完成！")
+        print("RAG vector store built!")
     def query(self, question: str, top_k: int = 3) -> Dict[str, Any]:
         q_emb = self.embedding_model.embed_text(question)
         results = self.vector_store.search(q_emb, top_k)
@@ -225,7 +225,7 @@ class SimpleRAG:
 
 if __name__ == '__main__':
     # 路径可根据实际情况调整
-    chunk_json_path = os.path.join(os.path.dirname(__file__), 'all_pdf_page_chunks_merged.json')
+    chunk_json_path = os.path.join(os.path.dirname(__file__), 'all_pdf_page_chunks_merged_2.json')
     rag = SimpleRAG(
         chunk_json_path, # 加载知识库
         batch_size=32 # 指定批量大小
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     FILL_UNANSWERED = True  # 未回答的也输出默认内容
 
     # 批量评测脚本：读取测试集，检索+大模型生成，输出结构化结果
-    test_path = "./datas/test_advanced_250.json"
+    test_path = "./datas/test_advanced_500.json"
     if os.path.exists(test_path):
         with open(test_path, 'r', encoding='utf-8') as f:
             test_data = json.load(f)
@@ -256,7 +256,7 @@ if __name__ == '__main__':
         def process_one(idx):
             item = test_data[idx]
             question = item['question']
-            tqdm.write(f"[{selected_indices.index(idx)+1}/{len(selected_indices)}] 正在处理: {question[:30]}...")
+            tqdm.write(f"[{selected_indices.index(idx)+1}/{len(selected_indices)}] processing: {question[:30]}...")
             result = rag.generate_answer(question, top_k=5)
             return idx, result
 
@@ -274,11 +274,11 @@ if __name__ == '__main__':
                 
                 results = []
                 for future in tqdm(concurrent.futures.as_completed(futures), 
-                                 total=len(futures), desc='并发批量生成'):
+                                 total=len(futures), desc='batch retrieval+generation'):
                     try:
                         results.append(future.result())
                     except Exception as e:
-                        print(f"处理失败: {e}")
+                        print(f"processing failed: {e}")
                         # 可以选择跳过或记录错误
 
         # 先输出一份未过滤的原始结果（含 idx）
@@ -286,7 +286,7 @@ if __name__ == '__main__':
         raw_out_path = os.path.join(os.path.dirname(__file__), 'rag_top1_pred_raw.json')
         with open(raw_out_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
-        print(f'已输出原始未过滤结果到: {raw_out_path}')
+        print(f'Original unfiltered results have been saved to: {raw_out_path}')
 
         # 只保留结果部分，并去除 retrieval_chunks 字段
         idx2result = {idx: {k: v for k, v in r.items() if k != 'retrieval_chunks'} for idx, r in results}
@@ -306,8 +306,8 @@ if __name__ == '__main__':
         out_path = os.path.join(os.path.dirname(__file__), 'rag_top1_pred.json')
         with open(out_path, 'w', encoding='utf-8') as f:
             json.dump(filtered_results, f, ensure_ascii=False, indent=2)
-        print(f'已输出结构化检索+大模型生成结果到: {out_path}')
+        print(f'all structured retrieval+generation results have been saved to: {out_path}')
     else:
-        print("datas/test.json 不存在")
+        print("datas/test.json does not exist")
     
         
