@@ -206,3 +206,11 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 all_pdf_page_chunks_merged.json
+
+# Experiment/result artifacts
+outputs/*.json
+outputs/*.txt
+
+# Root-level prediction result files
+rag_top1_pred*.json
+no_rag_top1_pred*.json

@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #年报2文件夹路径
 MERGED = (BASE_DIR / "all_pdf_page_chunks_merged_2.json").resolve()
 PDF_DIR = (BASE_DIR / "datas/年报2").resolve()
-OUT = (BASE_DIR / "datas/test_advanced_450_2.json").resolve()
+OUT = (BASE_DIR / "datas/test_advanced_500.json").resolve()
 
 
 def list_target_reports(pdf_dir: Path) -> List[str]:

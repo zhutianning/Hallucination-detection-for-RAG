@@ -79,8 +79,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # if you need to modify the paths, you can do so
 GOLD_PATH = BASE_DIR / "datas" / "gold_standard_500.json" # gold standard file
-BASELINE_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500.json" # baseline file
-RAG_PATH = BASE_DIR / "rag_top1_pred.json" # rag output file
+BASELINE_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500_mixtral-8x22b-instruct.json" # baseline file
+RAG_PATH = BASE_DIR / "rag_top1_pred_mixtral-8x22b-instruct.json" # rag output file
 CHUNK_JSON_PATH = BASE_DIR / "all_pdf_page_chunks_merged_2.json" # chunk json file
 
 

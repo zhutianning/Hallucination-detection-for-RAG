@@ -303,7 +303,7 @@ if __name__ == '__main__':
                     "page": "",
                 })
         # 输出结构化结果到json
-        out_path = os.path.join(os.path.dirname(__file__), 'rag_top1_pred.json')
+        out_path = os.path.join(os.path.dirname(__file__), 'rag_top1_pred_mixtral-8x22b-instruct.json')
         with open(out_path, 'w', encoding='utf-8') as f:
             json.dump(filtered_results, f, ensure_ascii=False, indent=2)
         print(f'all structured retrieval+generation results have been saved to: {out_path}')

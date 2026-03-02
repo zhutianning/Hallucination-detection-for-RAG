@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEST_PATH = BASE_DIR / "datas" / "test_advanced_500.json"
-OUT_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500.json"
+OUT_PATH = BASE_DIR / "outputs" / "no_rag_top1_pred_test_advanced_500_mixtral-8x22b-instruct.json"
 
 # if you want to run a subset of the questions, you can change the number here
 TEST_SAMPLE_NUM = None  # None means all 500 questions

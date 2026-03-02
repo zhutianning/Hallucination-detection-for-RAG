@@ -18,8 +18,8 @@ load_dotenv()
 # ========== Configuration ==========
 CHUNK_JSON_PATH = Path(__file__).resolve().parent.parent / "all_pdf_page_chunks_merged_2.json"  # Knowledge-base chunks
 GOLD_STANDARD_PATH = Path(__file__).resolve().parent.parent / "datas" / "gold_standard_500.json" # Gold standard answers
-RAG_ANSWERS_PATH = Path(__file__).resolve().parent.parent / "rag_top1_pred.json"  # RAG-generated answers
-OUTPUT_PATH = Path(__file__).resolve().parent.parent / "outputs" / "hallucination_detection_results.json"
+RAG_ANSWERS_PATH = Path(__file__).resolve().parent.parent / "rag_top1_pred_llama-3.1-8b-instruct.json"  # RAG-generated answers
+OUTPUT_PATH = Path(__file__).resolve().parent.parent / "outputs" / "hallucination_detection_results_llama-3.1-8b-instruct.json"
 
 # LLM judging layer config (optional)
 USE_LLM_LAYER = False
