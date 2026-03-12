@@ -5,9 +5,9 @@ Uses McNemar's Test for paired-sample significance testing.
 Applicable when two systems answer the same set of questions (paired data).
 
 Dependencies:
-- datas/gold_standard.json
-- no_rag_top1_pred_test_advanced_250.json
-- rag_top1_pred.json
+- datas/gold_standard_500.json
+- no_rag_top1_pred_test_advanced_500_Qwen3-14B.json
+- rag_top1_pred_Qwen3-14B.json
 """
 
 import json
@@ -303,7 +303,7 @@ def main():
     print_significance_report(mcnemar_result, proportion_result, type_results)
     
     # Save results to file
-    output_path = BASE_DIR / "outputs" / "significance_test_result.md"
+    output_path = BASE_DIR / "outputs" / "significance_test_result_llama-3.1-70b-instruct.md"
     output_path.parent.mkdir(exist_ok=True)
     
     with open(output_path, "w", encoding="utf-8") as f:
