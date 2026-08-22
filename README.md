@@ -1,5 +1,7 @@
-# Task Summary: High-Quality Question Set Generation
+# CFQA: A Chinese Financial Question Answering Benchmark From Corporate Annual Reports
+[Paper link](https://aclanthology.org/anthology-files/anthology-files/pdf/fnp/2026.fnp-1.3.pdf)
 
+## Task Summary: High-Quality Question Set Generation
 ## 📋 Task Requirements
 1. ❌ Original test.json contains many duplicate questions
 2. ❌ Question design is too simple, not conducive to hallucination detection
@@ -133,3 +135,19 @@ Build positive and negative sample pairs based on annotation results:
 **Version**: v2.1  
 **Generation Tool**: tools/generate_advanced_questions.py  
 **Validation Status**: ✅ All Passed
+
+---
+
+## 🌟 Open Sourced Gold Standard Dataset
+[My Dataset](https://huggingface.co/datasets/ZackZhu00/CFQA_Chinese_Finance_Question_Answering)
+If you want to use CFQA in your research, experiments, benchmarks, or publications, please cite the accompanying paper and give me a star:
+
+@inproceedings{zhu2026cfqa,
+  title     = {CFQA: A Chinese Financial Question Answering Benchmark From Corporate Annual Reports},
+  author    = {Tianning Zhu and Mo Liu and Murathan Kurfali},
+  booktitle = {Proceedings of The 7th Financial Narrative Processing Workshop (FNP 2026)},
+  year      = {2026},
+  address   = {Palma de Mallorca, Spain},
+  month     = {May},
+  publisher = {European Language Resources Association (ELRA)}
+}
